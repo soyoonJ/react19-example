@@ -73,3 +73,27 @@ const [isPending, startTransition] = useTransition()
 반면 useTransition의 경우 pending 상태도 함께 관리가 가능하며, hook이기 때문에 컴포넌트 외부에서는 사용이 불가하다.
 
 ### 💡 제어된 입력 state의 경우
+제어 input의 경우 Transition을 사용할 수 없다. 그 이유는, Transition의 경우 *non-blocking인데 반해, input을 업데이트 하는 것은 동기적으로 발생하기 때문이다.		
+
+*non-blocking이란? : 호출된 함수의 실행이 완료되지 않더라도 메인 함수를 블락하지 않고 백그라운드에서 별도로 처리하며, 전체적인 작업 흐름이 방해되지 않도록 함
+
+```javascript
+const [text, setText] = useState('');
+// ...
+function handleChange(e) {
+  // ❌ Can't use Transitions for controlled input state
+  startTransition(() => {
+    setText(e.target.value);
+  });
+}
+// ...
+return <input value={text} onChange={handleChange} />;
+```
+
+때문에 입력에 대해 Transition을 사용하려면 아래 두 가지 옵션을 활용해야 한다.		
+- 두 개의 분리된 state를 선언한다 : 하나는 input state로 선언, 다른 하나는 Transition 안에서 업데이트 되도록 선언
+- 하나의 state를 가지되, useDeferredValue를 추가 : 실제 value를 *lag behind 시켜주는 역할을 수행한다. non-blocking re-render가 실제 value를 자동으로 따라잡을 수 있도록 해준다. 즉 우선순위가 높은 사용자 입력은 즉시 반영되지만 우선순위가 낮은 UI(ex. 리스트 렌더링)는 약간 늦게 반영되며 결과적으로 UI가 버벅이지 않고 부드럽게 동작할 수 있게 된다.			
+
+*lag-behind란? : 특정 값이 최신 상태를 즉시 반영하지 않고 약간의 지연을 두고 업데이트 되는 상황		
+
+
